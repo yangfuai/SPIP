@@ -12,27 +12,105 @@ plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['mathtext.fontset'] = 'stix'
 
 
-#翼型读取函数
+# #翼型读取函数
+# def read_airfoil_data(file_path):
+#     try:
+#         with open(file_path, 'r') as f:
+#             lines = f.readlines()
+#     except FileNotFoundError:
+#         raise FileNotFoundError(f"翼型文件 {file_path} 未找到")
+
+#     data_lines = [line.strip() for line in lines[1:] if line.strip()]
+#     x_coords = []
+#     y_coords = []
+#     for line in data_lines:
+#         try:
+#             x, y = map(float, line.split())
+#             x_coords.append(x)
+#             y_coords.append(y)
+#         except ValueError:
+#             continue
+#     if len(x_coords) < 20:
+#         raise ValueError(f"翼型数据点数过少 ({len(x_coords)})，建议至少50个点")
+#     return {'x': x_coords, 'y': y_coords}
+
 def read_airfoil_data(file_path):
+    """
+    从 Selig/UIUC/XFOIL 等格式的 .dat 或 .txt 文件中读取翼型坐标。
+    自动跳过开头的任意行文字描述、标题、空行、注释等。
+    
+    支持的常见格式：
+    - 第一行是翼型名称（Selig格式）
+    - 前几行是文字说明
+    - 可能混有空行或以 # % ; 开头的注释行
+    - 坐标行可能是 "x y" 或 "x   y"（多个空格）
+    返回：
+        dict: {'x': list, 'y': list}  — 原始坐标点（未归一化）
+    """
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
     except FileNotFoundError:
         raise FileNotFoundError(f"翼型文件 {file_path} 未找到")
+    except Exception as e:
+        raise IOError(f"读取文件失败: {e}")
 
-    data_lines = [line.strip() for line in lines[1:] if line.strip()]
     x_coords = []
     y_coords = []
-    for line in data_lines:
-        try:
-            x, y = map(float, line.split())
-            x_coords.append(x)
-            y_coords.append(y)
-        except ValueError:
+    data_started = False
+    coord_count = 0
+
+    for line_num, line in enumerate(lines, 1):
+        line = line.strip()
+
+        # 跳过空行
+        if not line:
             continue
+
+        # 跳过明显是注释的行（常见符号）
+        if line.startswith(('#', '%', ';', '*', '//')):
+            continue
+
+        # 尝试解析为两个浮点数
+        try:
+            # 支持多种分隔符：空格、制表符、逗号
+            parts = line.replace(',', ' ').split()
+            if len(parts) >= 2:
+                x = float(parts[0])
+                y = float(parts[1])
+                
+                # 一些文件可能有第三列（如厚度），我们只取前两列
+                x_coords.append(x)
+                y_coords.append(y)
+                coord_count += 1
+                data_started = True
+                continue
+
+        except (ValueError, IndexError):
+            # 解析失败，说明这行不是坐标
+            pass
+
+        # 如果已经开始读取坐标，但当前行无法解析为坐标，则停止（防止后面有其他文字）
+        if data_started and not x_coords:
+            # 还没读到任何坐标就遇到无法解析的行，可能是格式问题
+            continue
+
+    # 后处理：去重和基本检查
     if len(x_coords) < 20:
-        raise ValueError(f"翼型数据点数过少 ({len(x_coords)})，建议至少50个点")
-    return {'x': x_coords, 'y': y_coords}
+        raise ValueError(f"从文件 {file_path} 中只读取到 {len(x_coords)} 个有效坐标点，"
+                        f"至少需要20个点才能构成有效翼型。")
+
+    # 去除完全相同的连续重复点（部分文件会有）
+    unique_x = []
+    unique_y = []
+    for x, y in zip(x_coords, y_coords):
+        if not unique_x or abs(x - unique_x[-1]) > 1e-10 or abs(y - unique_y[-1]) > 1e-10:
+            unique_x.append(x)
+            unique_y.append(y)
+
+    print(f"成功读取翼型坐标：共 {len(unique_x)} 个点（跳过前{line_num - len(unique_x)}行文字/空行）")
+
+    return {'x': unique_x, 'y': unique_y}
 
 #翼型预处理函数
 def preprocess_airfoil_data(coordinates, normalize=False, tolerance=1e-6):
