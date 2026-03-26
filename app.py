@@ -129,14 +129,14 @@ with tab1:
         # 原始 vs 拟合对比图
         st.markdown("### Original airfoil vs SPIP fitting airfoil")
         fig1, ax1 = plt.subplots(figsize=(8, 6))
-        ax1.plot(UpX, UpY, 'b-', lw=3, label='原始上表面')
-        ax1.plot(LowX, LowY, 'b-', lw=3, label='原始下表面')
+        ax1.plot(UpX, UpY, 'b-', lw=3, label='Original upper')
+        ax1.plot(LowX, LowY, 'b-', lw=3, label='Original lower')
         x_fit, zu_fit, zl_fit, _, _ = SPIP_fit(opt_params)
-        ax1.plot(x_fit, zu_fit, 'r--', lw=2.5, label='拟合上表面')
-        ax1.plot(x_fit, zl_fit, 'r--', lw=2.5, label='拟合下表面')
+        ax1.plot(x_fit, zu_fit, 'r--', lw=2.5, label='Fitted upper ')
+        ax1.plot(x_fit, zl_fit, 'r--', lw=2.5, label='Fitted lower')
         ax1.set_xlabel('x/c', fontsize=14); ax1.set_ylabel('z/c', fontsize=14)
         ax1.grid(True, alpha=0.3); ax1.set_aspect('equal', adjustable='box')
-        ax1.set_title("原始翼型与拟合对比", fontsize=15, pad=15)
+        ax1.set_title("Original vs Fitted", fontsize=15, pad=15)
         ax1.legend(fontsize=11, loc='center left', bbox_to_anchor=(1, 0.5))
         st.pyplot(fig1)
 
@@ -224,7 +224,7 @@ with tab1:
             ax2.plot(LowX, LowY, 'b-', alpha=0.25, label='original airfoil')
             ax2.set_xlabel('x/c'); ax2.set_ylabel('z/c')
             ax2.grid(True, alpha=0.3); ax2.set_aspect('equal', adjustable='box')
-            ax2.set_title("实时参数化重构结果", fontsize=15, pad=15)
+            ax2.set_title("reconstructed airfoil", fontsize=15, pad=15)
             ax2.legend(fontsize=11, loc='center left', bbox_to_anchor=(1, 0.5))
 
             is_valid, reasons = detect_deformed_airfoil(x_new, zu_new, x_new, zl_new)
