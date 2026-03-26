@@ -7,10 +7,7 @@ import pandas as pd
 import io
 import zipfile
 from pathlib import Path
-try:
-    from pyxfoil import XFoil
-except ImportError:
-    XFoil = None
+
 
 # ==================== 中文字体 + 数学符号支持 ====================
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans', 'sans-serif']
