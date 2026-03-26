@@ -6,6 +6,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# ==================== 中文字体 + 数学符号支持 ====================
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans', 'sans-serif']
+plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['mathtext.fontset'] = 'stix'
+
 
 #翼型读取函数
 def read_airfoil_data(file_path):
